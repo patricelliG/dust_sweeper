@@ -8,7 +8,30 @@ data Space = Space { hasDust :: Bool
                    , isDiscovered :: Bool
                    , numAdjacent :: Int
                    } deriving (Show)
- 
+
+-- Create a 2D list of size 'x' filled with 'a'
+board :: Int -> a -> [[a]]
+board x = replicate x . replicate x
+
+-- Display (Adjective) conversion values for spaces 
+value :: Space -> Char 
+value (Space dust discovered adjBombs) 
+    | discovered /= True = 'X'
+    | discovered == True && dust /= True = head $ show adjBombs
+    | otherwise = 'F'
+
+-- Return board with with visible characters 
+convert :: [[Space]] -> [[Char]]
+convert = map(map value)
+
+-- Print game board 
+printBoard :: [[Space]] -> IO()
+printBoard = putStrLn . unlines . convert
+
+
+
+
+
 -- Main method, mostly test code at the moment...
 -- main = do
 --    putStrLn "Welcome to dust sweeper!"
@@ -17,24 +40,3 @@ data Space = Space { hasDust :: Bool
 --    putStrLn ("Creating game board of size " ++ boardSize)
 --    let gameBoard = board (read boardSize :: Int) '#'
 --    printBoard gameBoard
-
--- Create a 2D list of size 'x' filled with 'a'
-board :: Int -> a -> [[a]]
-board x = replicate x . replicate x
-
--- Conversion chart for spaces 
-value 0 = 'x'
-value 1 = 'a'
-
--- Convert to user view
-convert :: [[Integer]] -> [String]
-convert = map(map value)
-
--- Print map
-printMap :: [[Integer]] -> IO()
-printMap = putStrLn . unlines . convert
-
-
--- Print the game board
---printBoard :: [[a]] -> [String]
---printBoard x = [show a | y <- x, a <- y] 
