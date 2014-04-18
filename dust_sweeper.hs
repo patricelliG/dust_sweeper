@@ -7,9 +7,8 @@
 -- Must install cabal packages for random "cabal install cabal-install"
 
 -- TODO
--- Add bombs at random
+-- Add bombs at random and update surrounding spaces
 -- Move on a space
--- Calculate adjBombs
 
 import System.Random -- Requires cabal
 import Data.List
@@ -39,6 +38,11 @@ convert = map(map value)
 printBoard :: [[Space]] -> IO()
 printBoard = putStrLn . unlines . convert
 
+-- Place dust at "row" "column"
+placeDust :: [[Space]] -> Int -> Int -> [[Space]]
+placeDust board row column = changeSpace board row column (makeDust ((board!!row)!!column))
+
+
 -- Return a board with elment at "row", "column" replaced with "newSpace" 
 changeSpace :: [[Space]] -> Int -> Int -> Space -> [[Space]]
 changeSpace board row column newSpace
@@ -52,7 +56,36 @@ restoreBoard board newRow splitRow
     | otherwise = case splitAt splitRow board of
         (top, oldRow:bottom) -> top ++ newRow : bottom
 
+-- Given row "row" and column "column" return a list of adjacent spaces
+-- Note, there is no error checking here, just dumb math
+calcAdj :: Int -> Int -> [(Int, Int)]
+calcAdj row column 
+    | otherwise = [(row,column+1),(row+1,column+1),(row+1,column),(row+1,column-1),(row,column-1),(row-1,column-1),(row-1,column),(row-1,column+1)]
 
+-- Increment the numAdj count for all spaces in the list of "dustySpaces"
+-- Sorry for the mess...
+incDustCountAll :: [[Space]] -> [(Int, Int)]-> [[Space]]
+incDustCountAll board dustySpaces 
+    | dustySpaces == [] = board
+    | otherwise = incDustCountAll (incDustCount board (fst (head dustySpaces)) (snd (head dustySpaces))) (tail dustySpaces)
+
+-- Increment the numAdj count for the given space
+incDustCount :: [[Space]] -> Int -> Int -> [[Space]]
+incDustCount board row column
+    | row < 0 || row > length board || column < 0 || column > length board = board
+    | otherwise = changeSpace board row column (updateCount ((board!!row)!!column))
+
+-- Helper function for incDustCount
+updateCount :: Space -> Space
+updateCount (Space dust discovered adjBombs) = (Space dust discovered (adjBombs + 1))
+
+-- Changes a spaces type to dust, helper function for placeDust
+makeDust :: Space -> Space
+makeDust (Space dust discovered adjBombs) = (Space True discovered adjBombs)
+
+-- Changes a spaces type to discovered, helper function for move 
+makeDiscovered :: Space -> Space
+makeDiscovered (Space dust discovered adjBombs) = (Space dust True adjBombs)
 
 
 -- Main method, mostly test code at the moment...
