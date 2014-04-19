@@ -18,6 +18,29 @@ data Space = Space { hasDust :: Bool
                    , isDiscovered :: Bool
                    , numAdjacent :: Int
                    } deriving (Show)
+main = do
+    -- Welcome the player
+    putStrLn "Welcome to dust sweeper!"
+    putStrLn "Please enter the board size."
+    -- Initialize the game board
+    boardSizeRaw <- getLine
+    let boardSize = read boardSizeRaw
+        initGameBoard = board boardSize (Space False False 0)
+    -- Add the mines...oops, I mean "dust balls"
+        numMines = calcNumMines boardSize
+    randGen <- getStdGen
+    putStrLn ("number of mines: " ++ (show numMines)) -- TEST
+    let dustLocations = take (numMines * 2) (randomRs (0, (boardSize - 1)) randGen)
+    putStrLn (show dustLocations)
+    let gameBoard = placeAllDust gameBoard dustLocations
+    putStrLn "HERE"
+--    printBoard initGameBoard
+    printBoard gameBoard
+    putStrLn "HERE1"
+    -- Exit the game
+    putStrLn ("Exiting...")
+      
+
 
 -- Create a 2D list of size 'x' filled with 'a'
 board :: Int -> a -> [[a]]
@@ -26,8 +49,8 @@ board x = replicate x . replicate x
 -- Display (Adjective) conversion values for spaces 
 value :: Space -> Char 
 value (Space dust discovered adjBombs) 
-    | discovered /= True = 'X'
-    | discovered == True && dust /= True = head $ show adjBombs
+--    | discovered /= True = 'X'
+--    | discovered == True && dust /= True = head $ show adjBombs
     | otherwise = 'D'
 
 -- Return board with with visible characters 
@@ -38,10 +61,19 @@ convert = map(map value)
 printBoard :: [[Space]] -> IO()
 printBoard = putStrLn . unlines . convert
 
+-- Calculate the number of dust balls for board size
+calcNumMines :: Int -> Int
+calcNumMines boardSize = round (fromIntegral(boardSize) / 4.0)
+
+-- Place dust balls at locations given in "dustLocations"
+placeAllDust :: [[Space]] -> [Int] -> [[Space]]
+placeAllDust board dustLocations  
+    | dustLocations == [] = board
+    | otherwise = placeAllDust (placeDust board (dustLocations!!0) (dustLocations!!1)) (drop 2 dustLocations)
+
 -- Place dust at "row" "column"
 placeDust :: [[Space]] -> Int -> Int -> [[Space]]
-placeDust board row column = changeSpace board row column (makeDust ((board!!row)!!column))
-
+placeDust board row column = incDustCountAll (changeSpace board row column (makeDust ((board!!row)!!column))) (calcAdj row column)
 
 -- Return a board with elment at "row", "column" replaced with "newSpace" 
 changeSpace :: [[Space]] -> Int -> Int -> Space -> [[Space]]
@@ -86,13 +118,3 @@ makeDust (Space dust discovered adjBombs) = (Space True discovered adjBombs)
 -- Changes a spaces type to discovered, helper function for move 
 makeDiscovered :: Space -> Space
 makeDiscovered (Space dust discovered adjBombs) = (Space dust True adjBombs)
-
-
--- Main method, mostly test code at the moment...
--- main = do
---    putStrLn "Welcome to dust sweeper!"
---    putStrLn "Please enter the board size."
---    boardSize <- getLine
---    putStrLn ("Creating game board of size " ++ boardSize)
---    let gameBoard = board (read boardSize :: Int) '#'
---    printBoard gameBoard
