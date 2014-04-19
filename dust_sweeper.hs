@@ -25,22 +25,15 @@ main = do
     -- Initialize the game board
     boardSizeRaw <- getLine
     let boardSize = read boardSizeRaw
-        initGameBoard = board boardSize (Space False False 0)
+        initGameBoard = board boardSize (Space False True 0)
     -- Add the mines...oops, I mean "dust balls"
         numMines = calcNumMines boardSize
     randGen <- getStdGen
-    putStrLn ("number of mines: " ++ (show numMines)) -- TEST
     let dustLocations = take (numMines * 2) (randomRs (0, (boardSize - 1)) randGen)
-    putStrLn (show dustLocations)
-    let gameBoard = placeAllDust gameBoard dustLocations
-    putStrLn "HERE"
---    printBoard initGameBoard
+        gameBoard = placeAllDust initGameBoard dustLocations
     printBoard gameBoard
-    putStrLn "HERE1"
     -- Exit the game
     putStrLn ("Exiting...")
-      
-
 
 -- Create a 2D list of size 'x' filled with 'a'
 board :: Int -> a -> [[a]]
@@ -49,8 +42,8 @@ board x = replicate x . replicate x
 -- Display (Adjective) conversion values for spaces 
 value :: Space -> Char 
 value (Space dust discovered adjBombs) 
---    | discovered /= True = 'X'
---    | discovered == True && dust /= True = head $ show adjBombs
+    | not discovered = 'X'
+    | discovered && not dust = head $ show adjBombs
     | otherwise = 'D'
 
 -- Return board with with visible characters 
@@ -61,24 +54,28 @@ convert = map(map value)
 printBoard :: [[Space]] -> IO()
 printBoard = putStrLn . unlines . convert
 
--- Calculate the number of dust balls for board size
+-- Calculate the number of dust balls for board size 
+-- Checked
 calcNumMines :: Int -> Int
-calcNumMines boardSize = round (fromIntegral(boardSize) / 4.0)
+calcNumMines boardSize = round (fromIntegral(boardSize) / 2.0)
 
 -- Place dust balls at locations given in "dustLocations"
+-- Checked
 placeAllDust :: [[Space]] -> [Int] -> [[Space]]
 placeAllDust board dustLocations  
     | dustLocations == [] = board
     | otherwise = placeAllDust (placeDust board (dustLocations!!0) (dustLocations!!1)) (drop 2 dustLocations)
 
 -- Place dust at "row" "column"
+-- Checked
 placeDust :: [[Space]] -> Int -> Int -> [[Space]]
 placeDust board row column = incDustCountAll (changeSpace board row column (makeDust ((board!!row)!!column))) (calcAdj row column)
 
 -- Return a board with elment at "row", "column" replaced with "newSpace" 
+-- Checked
 changeSpace :: [[Space]] -> Int -> Int -> Space -> [[Space]]
 changeSpace board row column newSpace
-    | row > length board || column > length board = board 
+    | row >= length board || column >= length board = board 
     | otherwise = case splitAt column (board!!row) of
         (front, oldSpace:tail) -> restoreBoard board (front ++ newSpace : tail) row
 
@@ -96,12 +93,14 @@ calcAdj row column
 
 -- Increment the numAdj count for all spaces in the list of "dustySpaces"
 -- Sorry for the mess...
+-- Checked
 incDustCountAll :: [[Space]] -> [(Int, Int)]-> [[Space]]
 incDustCountAll board dustySpaces 
     | dustySpaces == [] = board
     | otherwise = incDustCountAll (incDustCount board (fst (head dustySpaces)) (snd (head dustySpaces))) (tail dustySpaces)
 
 -- Increment the numAdj count for the given space
+-- Checked
 incDustCount :: [[Space]] -> Int -> Int -> [[Space]]
 incDustCount board row column
     | row < 0 || row > length board || column < 0 || column > length board = board
