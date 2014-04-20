@@ -4,13 +4,6 @@ dust_sweeper
 ### Description
 A two player minesweeper clone written in haskell. CLI only!
 
-### Supports Sorting by the Following Fields
-* name
-* source
-* submitter
-* points
-* comments 
-
 ### Dependencies 
 None
 
