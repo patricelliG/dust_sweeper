@@ -3,13 +3,7 @@
 -- Date: 03/21/2014
 -- Written By: Gary Patricelli                      
 
--- Notes
--- Must install cabal packages for random "cabal install cabal-install"
-
--- TODO
--- Move on a space
-
-import System.Random -- Requires cabal
+import System.Random
 import System.Exit 
 import Data.List
 
@@ -27,22 +21,23 @@ main = do
     boardSizeRaw <- getLine 
     let boardSize = read boardSizeRaw
         initGameBoard = board boardSize (Space False False 0)
-    -- Add the mines...oops, I mean "dust balls"
-        numDustBalls = calcNumMines boardSize
+    -- Add the mines...oops, I meant "dust balls"
+        numDustBalls = calcNumDustBalls boardSize
     randGen <- getStdGen
     let dustLocations = take (numDustBalls * 2) (randomRs (0, (boardSize - 1)) randGen)
         gameBoard = placeAllDust initGameBoard dustLocations
     -- Play the game!
-    endBoard <- doTurns "Sweep Away!!!" gameBoard 
+    endBoard <- doTurns "Sweep Away player 1!!!"  1 gameBoard 
     -- Player lost, exit the game
+    printBoard endBoard
     putStrLn "You Lose!"
     putStrLn "Exiting the Game."
 
 -- Conducts a single turn for the player
 -- Returns True if space was explored
 -- Returns False if space was a bomb
-doTurns :: String -> [[Space]] -> IO [[Space]]
-doTurns prompt board = do
+doTurns :: String -> Int -> [[Space]] -> IO [[Space]]
+doTurns prompt player board = do
     printBoard board
     putStrLn prompt
     putStrLn "Enter the row to be swept..."
@@ -55,8 +50,9 @@ doTurns prompt board = do
         then do
             if (isDust board expRow expColumn)
                 then do
+                    let endBoard = changeSpace board expRow expColumn (makeDiscovered ((board!!expRow)!!expColumn))
                     putStrLn "You hit a dust ball!!!"
-                    return board
+                    return endBoard
                 else do
                     putStrLn "Exploring space..."
                     -- Check if player won
@@ -67,8 +63,14 @@ doTurns prompt board = do
                             exitSuccess
                         else do
                             let newBoard = changeSpace board expRow expColumn (makeDiscovered ((board!!expRow)!!expColumn))
-                            doTurns "Good job! Keep on sweepin!" newBoard 
-        else doTurns "Invalid bounds!" board
+                            if player == 1
+                                then do
+                                    let newPrompt = "Good job player 1! Keep on sweepin player 2!" 
+                                    doTurns newPrompt 2 newBoard 
+                                else do
+                                    let newPrompt = "Good job player 2! Keep on sweepin player 1!" 
+                                    doTurns newPrompt 1 newBoard 
+        else doTurns "Invalid bounds!" player  board
 
             
 -- Check if play is in bounds of board
@@ -85,8 +87,8 @@ board x = replicate x . replicate x
 -- Display (Adjective) conversion values for spaces 
 value :: Space -> Char 
 value (Space dust discovered adjBombs) 
-    | not discovered = '='
-    | discovered && not dust && adjBombs == 0 = ' '
+    | not discovered = '?'
+    | discovered && not dust && adjBombs == 0 = '='
     | discovered && not dust = head $ show adjBombs
     | otherwise = '*'
 
@@ -108,8 +110,8 @@ checkForDust :: Space -> Bool
 checkForDust (Space dust discovered adjBombs) = dust
 
 -- Calculate the number of dust balls for board size 
-calcNumMines :: Int -> Int
-calcNumMines boardSize = round (fromIntegral(boardSize) / 2.0)
+calcNumDustBalls :: Int -> Int
+calcNumDustBalls boardSize = round (fromIntegral(boardSize) / 2.0)
 
 -- Place dust balls at locations given in "dustLocations"
 placeAllDust :: [[Space]] -> [Int] -> [[Space]]
