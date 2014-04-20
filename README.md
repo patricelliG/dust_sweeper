@@ -2,7 +2,7 @@ dust_sweeper
 ======
 
 ### Description
-A two player minesweeper clone written in haskell. CLI only!
+A two player minesweeper clone written in Haskell. CLI only!
 
 ### Dependencies 
 None
@@ -21,7 +21,7 @@ And thats it!
  
 ### Disclaimers
 * This code may smell
-* I am not respocible if it burns your house down
+* I am not responsible if it burns your house down
 
 ### TO DO
 * Add better error handling 
